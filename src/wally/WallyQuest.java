@@ -13,156 +13,59 @@ import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.image.BufferStrategy;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
-import wally.WallyQuest;
-
 @SuppressWarnings("serial")
 public class WallyQuest extends Canvas {
 	private BufferStrategy strategy;
-	private boolean gameRunning = true;
 	
 	private int area = 0;
-	private int pessoa = -1;
-	private int pessoaArea = 0;
-	private int[] achados = new int[]{0,0,0,-2,-2,0,0,-2,-2,0,0,-2,0,0,0};	
-	private int achadosNum = 0;
-	private int tempoFinal = 200;
-	private int victory = 0;
-	private String[] achadosNome = new String[15];
+	private int person_area = -1;
+	private int time_left = 200;
+	private int selected_student =  -1;
+	//0 - Nothing | 1 - Colour | 2 - Hqs | 3 - Game | 4 - Food | 5 - Guess
+	private int dialog_option = 0;
+	//0 - Running | 1 - Victory | 2 - Game Over | 3 - Close
+	private int game_state = 0;
+
+	private String[] names = new String[] {"angelo", "brian", "catarina", "chico", "elias", "elisa", "evaldo", "felix", "francisco", "geraldo", "katia", "lisa", "mario", "roberto", "sara"};
+	private String[] colours = new String[] { "Azul", "Laranja", "Vermelho", "Preto", "Marrom", "Cinza", "Rosa", "Verde"};
+	private String[] hair = new String[] {"Careca", "Preto", "Loiro", "Ruivo", "Castanho"};
+	private String[] hqs = new String[] {"Dare Devil", "Preacher", "Punisher", "Avengers", "Spider-Man", "SandMan", "Conan", "Batman"};
+	private String[] game = new String[] {"God of War", "Mortal Kombat", "Spyro", "Tibia", "Pou", "The Sims", "Rachet and Clank", "World of Warcraft", "Silent Hill"};
+	private String[] food = new String[] {"Macarrão", "Pizza", "Chips", "Taco", "Feijão", "Sushi", "Banana"};
 	private String resposta = "";
 	private String respostaFinal = "";
-	
-	//These arrays are all written in order so Felix's (nome[0]) favourite colour is Azul (cor[0])
-	private String[] nome = new String[] {"felix", "roberto", "lisa", "Francisco", "Geraldo", "elisa", "catarina", "Elias", "Evaldo", "katia", "angelo", "Mario", "brian", "sara", "chico"};	
-
-	private String[] cor = new String[] { "Azul", "Laranja", "Laranja", "Vermelho", "Azul", "Vermelho", "Preto", "Laranja", "Preto", "Azul", "Vermelho", "Laranja", "Preto", "Vermelho", "Azul"};
-	
-	//The code below became obsolete when we were able to show the actual caracters
-	//private String[] cabelo = new String[] {"Careca", "Preto", "Loiro", "Ruivo", "Careca", "Loiro", "Preto", "Careca", "Preto", "Ruivo", "Castanho", "Loiro", "Castanho", "Ruivo", "Careca"};
-
-	private String[] hq = new String[] {"Dare Devil", "Preacher", "Punisher", "Sandman", "Spider-Man", "Avengers", "Spider-Man", "SandMan", "Conan", "Punisher", "Preacher", "Spider-Man", "Batman", "Avengers", "Sandman"};
-			
-	private String[] jogo = new String[] {"God of War", "Mortal Kombat", "Spyro", "Tibia", "God of War", "Spyro", "Pou", "Tibia", "Mortal Kombat", "The Sims", "God of War", "Rachet and Clank", "World of Warcraft", "Silent Hill", "Rachet and Clank"};
-			
-	private String[] comida = new String[] {"Macarrão", "Pizza", "Chips", "Taco", "Feijão", "Sushi", "Macarrão", "Banana", "Chips", "Sushi", "Pizza", "Feijão", "Taco", "Sushi", "Banana"};
-	
-	private Image map;
+		
+	private Image image_state;
 	private Image timeCheck;
 	private Image lista;
 	private Image listaAchados;
-	private Image norte;
-	private Image centro;
-	private Image oeste;
-	private Image leste;
-	private Image sul;
-	private Image suemdonsa;
 	private Image dialogo;
-	private Image suemdonsaWin;
-	private Image gameOver;
 	
+	private Random random;
 
-	private Image Felix;
-	private Image Roberto;
-	private Image Lisa;
-	private Image Francisco;
-	private Image Geraldo;
-	private Image Elisa;
-	private Image Catarina;
-	private Image Elias;
-	private Image Evaldo;
-	private Image Katia;
-	private Image Angelo;
-	private Image Mario;
-	private Image Brian;
-	private Image Sara;
-	private Image Chico;
+	private List <Student> students;
+	private List <Integer> found;
 	
-	
-	private boolean gameTerminate = false;
-	
-	private boolean clicouTempo = false;
-	private boolean clicouLista = false;
-	private boolean clicouAchados = false;
-	private boolean clicouSuemdonsa = false;
-	
-	private boolean clicouNorte = false;
-	private boolean clicouCentro = false;
-	private boolean clicouOeste = false;
-	private boolean clicouLeste = false;
-	private boolean clicouSul = false;
-	
-	private boolean falando = false;
-	private boolean correct = false;
-	private boolean wrong = false;
-	
-	private boolean clicouCor = false;
-	private boolean clicouHQ = false;
-	private boolean clicouJogo = false;
-	private boolean clicouComida = false;
+	//0 - Time | 1 - List | 2 - Found | 3 - School
+	private Boolean[] hud_control = new Boolean[] {false, false, false, false};	
+	private boolean talking = false;
 	private boolean adivinhar = false;
-	
-	
-	
-	//List showing the girls and some of their characteristics
-	private String[] listagarotas = new String[]{ "Garotas:",
-			"",
-			"Catarina",
-			"Cor preferida: Preto | Cabelo: Preto | HQ preferida: Spider-Man",
-			"Jogo Preferido: Pou | Comida preferida: Macarrão",
-			"",
-			"Elisa",
-			"Cor preferida: Vermelho | Cabelo: Loura | HQ preferida: Avengers",
-			"Jogo Preferido: Spyro | Comida preferida: Sushi",
-			"",
-			"Katia",
-			"Cor preferida: Azul | Cabelo: Ruiva | HQ preferida: Punisher",
-			"Jogo Preferido: The Sims | Comida preferida: Sushi",
-			"",
-			"Lisa",
-			"Cor preferida: Laranja | Cabelo: Loura | HQ preferida: Punisher",
-			"Jogo Preferido: Spyro | Comida preferida: Chips",
-			"",
-			"Sara",
-			"Cor preferida: Vermelho | Cabelo: Ruiva | HQ preferida: Avengers",
-			"Jogo Preferido: Silent Hill | Comida preferida: Sushi"};
-	
-	//List showing the boys and some of their characteristics
-    //(split into 2 lists to be more manageable both for the player and the programmers)
-	private String[] listagarotos = new String[] { "Garotos:",
-			"",
-			"Angelo",
-			"Cor preferida: Vermelho | Cabelo: Castanho | HQ preferida: Preacher",
-			"Jogo Preferido: God of War | Comida preferida: Pizza",
-			"",
-			"Brian",
-			"Cor preferida: Preto | Cabelo: Castanha | HQ preferida: Batman",
-			"Jogo Preferido: World of Warcraft | Comida preferida: Taco",
-			"",
-			"Chico",
-			"Cor preferida: Azul | Cabelo: Careca | HQ preferida: Conan",
-			"Jogo Preferido: Rachet and Clank | Comida preferida: Banana",
-			"",
-			"Felix",
-			"Cor preferida: Azul | Cabelo: Careca | HQ preferida: Dare Devil",
-			"Jogo Preferido: God of War | Comida preferida: Macarrão",
-			"",
-			"Roberto",
-			"Cor preferida: Laranja | Cabelo: Preto | HQ preferida: Preacher",
-			"Jogo Preferido: Mortal Kombat | Comida preferida: Pizza"};
-	
+	private boolean text_control = false;
 	
 	public WallyQuest() {
 		JFrame container = new JFrame("Wally's Quest");
 
 		JPanel panel = (JPanel) container.getContentPane();
-		//Aqui é definido o tamanho da janela.
 		panel.setPreferredSize(new Dimension(1000, 780));
 		panel.setLayout(null);
 
-		//Aqui deve ser definido o mesmo tamanho que foi utilizado anteriormente.
 		setBounds(0, 0, 1000, 780);
 		panel.add(this);
 
@@ -191,312 +94,250 @@ public class WallyQuest extends Canvas {
 	}
 
 	private void init() {
-		//Aqui dentro deve ser inicializado todos os valores necessários
 		//Loading all required images
-		map = Toolkit.getDefaultToolkit().getImage("map.png");
-		timeCheck = Toolkit.getDefaultToolkit().getImage("timecheck.png");
-		lista = Toolkit.getDefaultToolkit().getImage("listab.png");
-		listaAchados = Toolkit.getDefaultToolkit().getImage("listaachados.png");
-		norte = Toolkit.getDefaultToolkit().getImage("area.png");
-		centro = Toolkit.getDefaultToolkit().getImage("area.png");
-		oeste = Toolkit.getDefaultToolkit().getImage("area.png");
-		leste = Toolkit.getDefaultToolkit().getImage("area.png");
-		sul = Toolkit.getDefaultToolkit().getImage("area.png");
-		suemdonsa = Toolkit.getDefaultToolkit().getImage("suemdonsa.png");
-		dialogo = Toolkit.getDefaultToolkit().getImage("dialogo.png");
-		suemdonsaWin = Toolkit.getDefaultToolkit().getImage("suemdonsa WIN.png");
-		gameOver = Toolkit.getDefaultToolkit().getImage("gameover.png");
+		image_state = loadImage("map");
+		timeCheck = loadImage("timecheck");
+		lista = loadImage("listab");
+		listaAchados = loadImage("listaachados");
+		dialogo = loadImage("dialogo");
+
+		students = new ArrayList<Student>();
+		found = new ArrayList<Integer>();
+		random = new Random();
 		
-		Felix = Toolkit.getDefaultToolkit().getImage("Felix NEW.png");
-		Roberto = Toolkit.getDefaultToolkit().getImage("Roberto NEW.png");
-		Lisa = Toolkit.getDefaultToolkit().getImage("Lisa NEW.png");
-		Francisco = Toolkit.getDefaultToolkit().getImage("Francisco NEW.png");
-		Geraldo = Toolkit.getDefaultToolkit().getImage("Geraldo NEW.png");
-		Elisa = Toolkit.getDefaultToolkit().getImage("Elisa NEW.png");
-		Catarina = Toolkit.getDefaultToolkit().getImage("Catarina NEW.png");
-		Elias = Toolkit.getDefaultToolkit().getImage("Elias NEW.png");
-		Evaldo = Toolkit.getDefaultToolkit().getImage("Evaldo NEW.png");
-		Katia = Toolkit.getDefaultToolkit().getImage("Katia NEW.png");
-		Angelo = Toolkit.getDefaultToolkit().getImage("Angelo NEW.png");
-		Mario = Toolkit.getDefaultToolkit().getImage("Mario NEW.png");
-		Brian = Toolkit.getDefaultToolkit().getImage("Brian NEW.png");
-		Sara = Toolkit.getDefaultToolkit().getImage("Sara NEW.png");
-		Chico = Toolkit.getDefaultToolkit().getImage("Chico NEW.png");
+		createStudents();
+	}
+	
+	public void createStudents() {
+		Image sprite = null;
+		Integer sex = null;
+		String name = null;
+		String color = null;
+		String hair = null;
+		String hqs = null;
+		String game = null;
+		String food = null;
+		Boolean isStudent = null;
+		
+		List <Student> students_aux = new ArrayList<>(students.size());;
+				
+		for (int i = 0; i < names.length; i++) {
+			name = this.names[i];
+			color = this.colours[random.nextInt(7)];
+			hair = this.hair[random.nextInt(4)];
+			hqs = this.hqs[random.nextInt(7)];
+			game = this.game[random.nextInt(8)];
+			food = this.food[random.nextInt(6)];
+			sex = this.checkSex(name);
+			sprite = loadImage(name);
+			isStudent = random.nextBoolean();
+			
+			Student new_student = new Student(i, sprite, sex, name, color, hair, hqs, game, food, isStudent);
+			students.add(new_student);
+			students_aux.add(null);
+
+		}
+
+		int control = 0;
+		//Change students list position
+		while (control < 15) {
+			int random_aux = random.nextInt(15);
+			Student new_student = students.get(random_aux);
+			
+			for (int i = 0; i < students_aux.size(); i++) {
+				if (students_aux.get(i) == null ) {
+					students_aux.set(i, new_student);
+					students_aux.get(i).setId(i);
+					control++;
+					break;
+				} else if (new_student.getName() == students_aux.get(i).getName()) {
+					break;
+				}
+			}			
+		}
+		
+		students = students_aux;
+		
+	}
+
+	
+	public Integer checkSex(String name) {
+		String[] girls_names = new String[] {"catarina", "elisa", "katia", "lisa", "sara"};
+
+		for (int i = 0; i < girls_names.length; i++) {
+			if (name == girls_names[i]) {
+				return 1;
+			}
+		}
+		return 0;
+	}
+	
+	public Image loadImage(String name) {
+		Image image = Toolkit.getDefaultToolkit().getImage(name + ".png");
+		return image;
 	}
 	
 	public void gameLoop() {
-		while(gameRunning) {
+		while(game_state < 3) {
 			Graphics2D g = (Graphics2D) strategy.getDrawGraphics();
 			
 			//Draw main map
-			g.drawImage(map, 0, 0, null);	
-			
-			if(tempoFinal < 1) {
-				gameTerminate = true;
-			}
-			
-			
-			//Draw areas
-			
-				if (clicouNorte) {
-					g.drawImage(norte, 0, 0, null);
-					area = 1;
-				}
-				if (clicouCentro) {
-					g.drawImage(centro, 0, 0, null);
-					area = 2;
-				}
-				if (clicouOeste) {
-					g.drawImage(oeste, 0, 0, null);
-					area = 3;
-				}
-				if (clicouLeste) {
-					g.drawImage(leste, 0, 0, null);
-					area = 4;
-				}
-				if (clicouSul) {
-					g.drawImage(sul, 0, 0, null);
-					area = 5;
-				}
+			g.drawImage(image_state, 0, 0, null);	
+
+			if (game_state == 1) {
+				image_state = loadImage("suemdonsaWin");
+			} else if (game_state == 2) {
+				image_state = loadImage("gameOver");
+			} else if (area == 0) {
+				image_state = loadImage("map");
+			} else if (area > 0) {
+				image_state = loadImage("area");
 				
-				//Drawing the school (suemdonsa) screen
-				if (clicouSuemdonsa && victory != 1){
-					falando = false;
-					area = 6;
-					g.drawImage(suemdonsa, 0, 0, null);
-					g.setFont(new Font ("Arial", Font.BOLD, 70));
-					g.drawString(String.valueOf(10 - achadosNum), 890, 365);
-				} else if (clicouSuemdonsa && victory == 1) {
-					clicouLista = false;
-					clicouAchados = false;
-					clicouTempo = false;
-					falando = false;
-					area = 6;
-					g.drawImage(suemdonsaWin, 0, 0, null);
+				students.get(person_area).setX(175);
+				students.get(person_area-1).setX(416);
+				students.get(person_area-2).setX(754);
+				
+				students.get(person_area).setY(587);
+				students.get(person_area-1).setY(360);
+				students.get(person_area-2).setY(562);
+				
+				g.drawImage(students.get(person_area).getSprite(), 175, 587, null);
+				g.drawImage(students.get(person_area-1).getSprite(), 416, 360, null);
+				g.drawImage(students.get(person_area-2).getSprite(), 754, 562, null);
+				
+				//Drawing the characters inside the dialog screen
+				if (talking) {
+					g.drawImage(dialogo, 300, 234, null);
+					g.drawImage(students.get(selected_student).getSprite(), 500, 350, null);
 				}
-			
-
-			switch (area) {
-			case 1 :
-				g.drawImage(Felix, 175, 587, null);
-				g.drawImage(Roberto, 416, 360, null);
-				g.drawImage(Lisa, 754, 562, null);
-				pessoa = 0;
-				break;
-			case 2 :
-				g.drawImage(Francisco, 175, 587, null);
-				g.drawImage(Geraldo, 416, 360, null);
-				g.drawImage(Elisa, 754, 562, null);
-				pessoa = 3;
-				break;
-			case 3 :
-				g.drawImage(Catarina, 175, 587, null);
-				g.drawImage(Elias, 416, 360, null);
-				g.drawImage(Evaldo, 754, 562, null);
-				pessoa = 6;
-				break;
-			case 4 :
-				g.drawImage(Katia, 175, 587, null);
-				g.drawImage(Angelo, 416, 360, null);
-				g.drawImage(Mario, 754, 562, null);
-				pessoa = 9;
-				break;
-			case 5 :
-				g.drawImage(Brian, 175, 587, null);
-				g.drawImage(Sara, 416, 360, null);
-				g.drawImage(Chico, 754, 562, null);
-				pessoa = 12;
-				break;
-			};
-			
-			/*Each question will take the int "pessoa" as it's number so if the player wants to talk to the third
-			 * person (in area 1 (Norte)) the variable will be subtracted by 1 and the program will gather all it's answers
-			 * from this int, Example: player enters "3"
-			 * int "pessoa" is now equal to the number 3
-			 * (in area 1) this variable is reduced by 1,
-			 * pessoa now equal 2 so cor[pessoa] will lead to element
-			 * number 2 in the array "cor[]"
-			 */
-			switch (pessoaArea) {
-			case 1 :
-				pessoa += 0;
-				break;
-			case 2 :
-				pessoa += 1;
-				break;
-			case 3 :
-				pessoa += 2;
-				break;
-			}
-			
-						
-			//Draw dialog screen
-			if (falando) {
-				g.drawImage(dialogo, 300, 234, null);
-			}
-			
-			//Drawing the characters inside the dialog screen
-			if (area != 0 && falando) {
-				switch (pessoa) {
-				case -1 :
-					break;
-				case 0 :
-					g.drawImage(Felix, 500, 350, null);
-					break;
-				case 1 :
-					g.drawImage(Roberto, 500, 350, null);
-					break;
-				case 2 :
-					g.drawImage(Lisa, 500, 350, null);
-					break;
-				case 3 :
-					g.drawImage(Francisco, 500, 350, null);
-					break;
-				case 4 :
-					g.drawImage(Geraldo, 500, 350, null);
-					break;
-				case 5 :
-					g.drawImage(Elisa, 500, 350, null);
-					break;
-				case 6 :
-					g.drawImage(Catarina, 500, 350, null);
-					break;
-				case 7 :
-					g.drawImage(Elias, 500, 350, null);
-					break;
-				case 8 :
-					g.drawImage(Evaldo, 500, 350, null);
-					break;
-				case 9 :
-					g.drawImage(Katia, 500, 350, null);
-					break;
-				case 10 :
-					g.drawImage(Angelo, 500, 325, null);
-					break;
-				case 11 :
-					g.drawImage(Mario, 500, 350, null);
-					break;
-				case 12 :
-					g.drawImage(Brian, 480, 350, null);
-					break;
-				case 13 :
-					g.drawImage(Sara, 500, 350, null);
-					break;
-				case 14 :
-					g.drawImage(Chico, 500, 350, null);
-					break;
-				};
-			}
-			
-
-			//Writing out the answers to each question
-			g.setFont(new Font("Arial", Font.BOLD, 18));
-
-			if (clicouCor){
-				g.drawString(cor[pessoa], 632, 310);
-			} else if (clicouHQ) {
-				g.drawString(hq[pessoa], 632, 310);
-			} else if (clicouJogo) {
-				g.drawString(jogo[pessoa], 632, 310);
-			} else if (clicouComida) {
-				g.drawString(comida[pessoa], 632, 310);
-			
-			//This is the player trying to guess who they're talking to (Adivinhar)
-			} else if (adivinhar && falando) {
-				//if The person does not go to your school, they'll say so only
-				//when you ask to guess their name and take them to the lecture,
-				//this serves only to waste your time and make the game more difficult
-
-				if (achados[pessoa] == -2){
-					g.setFont(new Font ("Arial", Font.BOLD, 12));
-					g.drawString("Prazer em te conhecer,", 640, 280);
-					g.drawString("eu sou " +nome[pessoa] + ".", 640, 300);
-					g.drawString("Desculpe mas eu", 640, 320);
-					g.drawString("não estudo", 640, 340);
-					g.drawString("no Suemdonsa.", 640, 360);
+				//Writing out the answers to each question
+				g.setFont(new Font("Arial", Font.BOLD, 18));
+				if (dialog_option == 1) {
+					g.drawString(students.get(selected_student).getColor(), 632, 310);
+				} else if (dialog_option == 2) {
+					g.drawString(students.get(selected_student).getHq(), 632, 310);
+				} else if (dialog_option == 3) {
+					g.drawString(students.get(selected_student).getGame(), 632, 310);
+				} else if (dialog_option == 4) {
+					g.drawString(students.get(selected_student).getFood(), 632, 310);
+				} else if (adivinhar) {
+					String check_guess = guess();
 					
-				} else if (achados[pessoa] == 1) {
-					g.setFont(new Font ("Arial", Font.BOLD, 17));
-					correct = false;
-					wrong = false;
-					g.drawString("Voce já encontrou", 633, 305);
-					g.drawString("esta pessoa!", 635, 320);
-				} else if (achados[pessoa] == 0){
-					wrong = false;
-					g.setFont(new Font ("Arial", Font.BOLD, 20));
-					g.drawString("Digite o nome", 635, 290);
-					g.drawString("e aperte enter", 635, 315);
-					g.drawString(resposta, 657, 360);
-				}
-				
-			}
-			//Checking to see if you guessed correctly
-			if (correct && falando){
-				achados[pessoa] = 1;
-				g.drawString("Voce encontrou:", 630, 305);
-				g.setFont(new Font ("Arial", Font.BOLD, 35));
-				g.drawString(nome[pessoa] + "!", 635, 340);
-				achadosNome[pessoa] = nome[pessoa];
-			} else if (wrong && falando) {
-				g.setFont(new Font ("Arial", Font.BOLD, 30));
-				g.drawString("Incorreto!", 635, 300);
-				adivinhar = false;
-			}
-			
-			
-			//Drawing the List
-			if (clicouLista) {
-				int j = 50;
-				g.drawImage(lista, 230, 15, null);
-				
-				g.setFont(new Font("Arial", Font.BOLD, 14));
-				
-				for (int i = 0; i < listagarotas.length; i++) {
-					g.drawString(listagarotas[i], 235, j);
-					j += 14;
-					
-				}
-				j+= 28;
-				for (int i = 0; i < listagarotas.length; i++) {
-					
-					g.drawString(listagarotos[i], 235, j);
-					j += 14;
-				}
-			}
-			
-			
-			//Drawing the List of found students
-			if (clicouAchados) {
-				int j = 410;
-				g.drawImage(listaAchados, 740, 335, null);
-				
-				g.setFont(new Font("Arial", Font.BOLD, 32));
-				
-				g.drawString("Achados:", 745, 375);
-				for (int i = 0; i < achadosNome.length; i++) {
-					if (achados[i] == 1) {
-					g.setFont(new Font("Arial", Font.BOLD, 34));
-					g.drawString(achadosNome[i], 755, j);
-					j += 28;
+					switch (check_guess) {
+					case "not_student":
+						int text_x = 640;
+						g.setFont(new Font ("Arial", Font.BOLD, 12));
+						g.drawString("Prazer em te conhecer,", text_x, 280);
+						g.drawString("eu sou " +students.get(selected_student).getName()+ ".", text_x, 300);
+						g.drawString("Desculpe mas eu", text_x, 320);
+						g.drawString("não estudo", text_x, 340);
+						g.drawString("no Suemdonsa.", text_x, 360);
+						break;
+					case "found_student":
+						g.setFont(new Font ("Arial", Font.BOLD, 17));
+						g.drawString("Voce já encontrou", 633, 305);
+						g.drawString("esta pessoa!", 635, 320);
+						break;
+					case "default":
+						g.setFont(new Font ("Arial", Font.BOLD, 20));
+						g.drawString("Digite o nome", 635, 290);
+						g.drawString("e aperte enter", 635, 315);
+						g.drawString(resposta, 657, 360);
+						break;
+					case "correct":
+						g.setFont(new Font ("Arial", Font.BOLD, 35));						
+						g.drawString("Voce encontrou:", 630, 305);
+						g.drawString(students.get(selected_student).getName() + "!", 635, 340);
+						found.add(selected_student);
+						break;
+					case "incorrect":
+						g.setFont(new Font ("Arial", Font.BOLD, 30));
+						g.drawString("Incorreto!", 635, 300);
+						break;
 					}
 				}
-			}
+			} 
 			
 			//Drawing time check
-			 if (clicouTempo) {
+			 if (hud_control[0]) {
 			 g.drawImage(timeCheck, 0, 280, null);
 			 g.setFont(new Font("Arial", Font.BOLD, 22));
-			 	if (tempoFinal >= 100) {
-			 		g.drawString(String.valueOf(tempoFinal), 96, 380);
+			 	if (time_left >= 100) {
+			 		g.drawString(String.valueOf(time_left), 96, 380);
 			 	} else {
-			 		g.drawString(String.valueOf(tempoFinal), 101, 380);
+			 		g.drawString(String.valueOf(time_left), 101, 380);
 			 	}
 			 }
 			 
+			//Drawing the List
+			if (hud_control[1]) {
+				int j = 50;
+				List <String> girls_tips = new ArrayList<>();
+				List <String> boys_tips = new ArrayList<>();
+				List <String> students_tips = new ArrayList<>();
+
+				//Separate girls from boys
+				for (int i = 0; i < students.size(); i++) {
+					if (students.get(i).getSex() == 1) {
+						girls_tips.add(students.get(i).getName());
+						girls_tips.add("Cor: " + students.get(i).getColor() + " | Cabelo: " + students.get(i).getHair() + " | HQ: " + students.get(i).getHq() + " | Jogo: " + students.get(i).getGame() + " | Comida: " + students.get(i).getFood());
+					} else {
+						boys_tips.add(students.get(i).getName());
+						boys_tips.add("Cor: " + students.get(i).getColor() + " | Cabelo: " + students.get(i).getHair() + " | HQ: " + students.get(i).getHq()  + " | Jogo: " + students.get(i).getGame() + " | Comida: " + students.get(i).getFood());
+					}
+					students_tips.add(students.get(i).getName());
+					students_tips.add("Cor: " + students.get(i).getColor() + " | Cabelo: " + students.get(i).getHair() + " | HQ: " + students.get(i).getHq() + " | Jogo: " + students.get(i).getGame() + " | Comida: " + students.get(i).getFood());
+				} 
+				
+				int control = 0;
+				boolean all_girls_in = false;
+				while (control <= students.size()) {
+					if (control < students.size() && !all_girls_in) {
+						
+					}
+				}
+					
+				g.drawImage(lista, 230, 15, null);
+				g.setFont(new Font("Arial", Font.BOLD, 12));
+				g.drawString("Garotas", 235, j);				
+
+				g.setFont(new Font("Arial", Font.BOLD, 11));
+				for (int i = 0; i < girls_tips.size(); i++) {
+					g.drawString(girls_tips.get(i), 235, j + 14);
+					j += 14;
+				}
+				j += 28;
+				g.setFont(new Font("Arial", Font.BOLD, 12));
+				g.drawString("Garotos", 235, j);
+				g.setFont(new Font("Arial", Font.BOLD, 11));
+				for (int i = 0; i < boys_tips.size(); i++) {
+					g.drawString(boys_tips.get(i), 235, j + 14);
+					j += 14;
+				}
+			}
+				
+			//Drawing the List of found students
+			if (hud_control[2]) {
+				int j = 410;
+				g.drawImage(listaAchados, 740, 335, null);
+				g.setFont(new Font("Arial", Font.BOLD, 32));
+				g.drawString("Alunos encontrados:", 745, 375);
+				
+				for (int i = 1; i < found.size(); i++) {
+					g.setFont(new Font("Arial", Font.BOLD, 34));
+					g.drawString(students.get(found.get(i)).getName(), 755, j);
+					j += 28;
+				}
+			}
 			
+			 //Drawing the school (suemdonsa) screen
+			if (hud_control[3]){
+				g.setFont(new Font ("Arial", Font.BOLD, 70));
+				g.drawString(String.valueOf(10), 890, 365);
+			} 
 			
-			if (gameTerminate){
-				g.drawImage(gameOver, 0, 0, null);
+			if(time_left < 1) {
+				game_state = 2;
 			}
 			
 			g.dispose();
@@ -504,13 +345,46 @@ public class WallyQuest extends Canvas {
 			
 			try { Thread.sleep(10); } catch (Exception e) {}
 		}
-	
-		
-
 	}
 	
-
-
+	public String guess() {
+		for (int i = 0; i < found.size(); i++) {
+			if (found.get(i) == selected_student) {
+				return "found_student";
+			}
+		}
+		System.out.println("response: " + respostaFinal + " |student: " + students.get(selected_student).getName());
+		if (students.get(selected_student).getIsStudent() == false) {
+			return "not_student";
+		} else if (respostaFinal.equals(students.get(selected_student).getName())) {
+			return "correct";
+		} else if (!respostaFinal.equals(students.get(selected_student).getName())) {
+			return "incorrect";
+		}
+		return "default";
+	}
+	
+	public void resetState(String screen) {
+		switch (screen) {
+		case "out_of_bounds":
+			talking = false;
+			adivinhar = false;
+			selected_student = -1;
+			dialog_option = 0;
+			break;
+		
+		case "school_reset":
+			hud_control[0] = false;
+			hud_control[1] = false;
+			hud_control[2] = false;
+			talking = false;
+			selected_student = -1;
+			area = 0;
+			image_state = loadImage("suemdonsa");
+			break;
+		}
+	}
+	
 	public static void main(String[] args) {
 		WallyQuest ig = new WallyQuest();
 		ig.gameLoop();
@@ -519,281 +393,197 @@ public class WallyQuest extends Canvas {
 	public class mouseInputHandler extends MouseAdapter {
 		@Override
 		public void mouseClicked(MouseEvent e) {
-			//This is used for programming to find coordinates 
-			System.out.println("X: " + e.getX() + " - Y: " + e.getY());
-			
-			//Time
-			//Checking to see if you've click on the time icon
-			if (e.getX () >= 337 && e.getX () <= 382 && e.getY () >= 707 && e.getY () <= 754) {
-				clicouTempo = true;
-				System.out.println("Tempo restante: " + tempoFinal);
-			}
-			//Checking if you clicked on the "X" on the watch to close it
-			if (e.getX () >= 152 && e.getX () <= 177 && e.getY () >= 290 && e.getY () <= 313 && clicouTempo) {
-				clicouTempo = false;
-			}
-			
-			
-			//List
-			//Checking if you clicked on the list icon	
-			if (e.getX () >= 436 && e.getX () <= 471 && e.getY () >= 718 && e.getY () <= 762) {
-				clicouLista = true;	
-			}
-			//Checking if you clicked on the "X" in the list to close it
-			if (e.getX () >= 675 && e.getX () <= 707 && e.getY () >= 18 && e.getY () <= 47 && clicouLista){
-				clicouLista = false;
-			}
-			
-			
-			//List of Found Students
-			//Checking if you clicked on the Found students icon
-			if (e.getX () >= 512 && e.getX () <= 544 && e.getY () >= 712 && e.getY () <= 762) {
-				clicouAchados = true;	
-			}
-			//Checking if you clicked on the "X" in the Found students page to close it
-			if (e.getX () >= 967 && e.getX () <= 984 && e.getY () >= 335 && e.getY () <= 352 && clicouAchados) {
-				clicouAchados = false;	
-			}		
+			super.mouseClicked(e);
 
+			if (!hud_control[3]) {
+				//Time
+				if (e.getX () >= 337 && e.getX () <= 382 && e.getY () >= 707 && e.getY () <= 754) {
+					hud_control[0] = !hud_control[0];
+				} else if (e.getX () >= 152 && e.getX () <= 177 && e.getY () >= 290 && e.getY () <= 313 && hud_control[0]) {
+					//Checking if you clicked on the "X" on the watch to close it
+					hud_control[0] = false;
+				}
+				
+				//List
+				if (e.getX () >= 436 && e.getX () <= 471 && e.getY () >= 718 && e.getY () <= 762) {
+					hud_control[1] = !hud_control[1];	
+				} else if (e.getX () >= 675 && e.getX () <= 707 && e.getY () >= 18 && e.getY () <= 47 && hud_control[1]){
+					//Checking if you clicked on the "X" in the list to close it
+					hud_control[1] = false;
+				}
+				
+				//List of Found Students
+				if (e.getX () >= 512 && e.getX () <= 544 && e.getY () >= 712 && e.getY () <= 762) {
+					hud_control[2] = !hud_control[2];	
+				} else if (e.getX () >= 967 && e.getX () <= 984 && e.getY () >= 335 && e.getY () <= 352 && hud_control[2]) {
+					//Checking if you clicked on the "X" in the Found students page to close it
+					hud_control[2] = false;	
+				}		
+			}
+			//School
+			if (e.getX () >= 602 && e.getX () <= 639 && e.getY () >= 695 && e.getY () <= 755) {
+				resetState("resetState");
+				hud_control[3] = !hud_control[3];				
+			} 
+			
 			//Check to see if you clicked the "EXIT" button on the game over screen
-			if (e.getX () >= 355 && e.getX () <= 639 && e.getY () >= 575 && e.getY () <= 741 && gameTerminate){
+			if (e.getX () >= 355 && e.getX () <= 639 && e.getY () >= 575 && e.getY () <= 741 && game_state == 2){
 				System.exit(0);
 			}
 			
-			//Returning to the school (Suemdonsa)
-			if (e.getX () >= 602 && e.getX () <= 639 && e.getY () >= 695 && e.getY () <= 755) {
-				falando = false;
-				correct = false;
-				wrong = false;
-				clicouSuemdonsa = true;				
-				//checking to see if you have found all the students
-				achadosNum = 0;
-				for (int i = 0; i < achados.length; i++) {
-					if (achados[i] == 1) {
-						achadosNum += 1;
-					}
-				}
-				if (achadosNum == 10){
-					victory = 1;
-				}
-			}
 			
-			//Back button (Voltar)
-			if (e.getX () >= 847 && e.getX () <= 1000 &&
-				e.getY () >= 0 && e.getY () <= 60 && area != 0) {
-				System.out.println("Voltar");
-				if (falando == false) {
-					if (clicouNorte) {
-						clicouNorte = false;
-						area = 0;
-					} else if (clicouCentro) {
-						clicouCentro = false;
-						area = 0;
-					} else if (clicouSuemdonsa) {
-						clicouSuemdonsa = false;
-						area = 0;
-					} else if (clicouOeste) {
-						clicouOeste = false;
-						area = 0;
-					} else if (clicouLeste) {
-						clicouLeste = false;
-						area = 0;
-					} else if (clicouSul) {
-						clicouSul = false;
+			if (area > 0) {
+				//Back button
+				if (e.getX () >= 847 && e.getX () <= 1000 && e.getY () >= 0 && e.getY () <= 60) {
+					if (hud_control[3]) {
+						hud_control[3] = false;
+					} else {
 						area = 0;
 					}
+				}
+				
+				//People in the map
+				if (!talking) {
+					for (int i = person_area; i >= person_area - 2; i--) {
+						if (e.getX () >= students.get(i).getX() && e.getX () <= students.get(i).getX() + students.get(i).getSprite().getWidth(null)
+								&& e.getY () >= students.get(i).getY() && e.getY () <= students.get(i).getY() + students.get(i).getSprite().getHeight(null)) {
+							selected_student = person_area - (person_area - i);
+							break;
+						}
+					}
+					//Decreases time
+					if (selected_student != -1) {
+						time_left -= 3;
+						talking = true;
+					}
+					
 				} else {
-					correct = false;
-					wrong = false;
-					falando = false;
-					clicouCor = false;
-					clicouHQ = false;
-					clicouJogo = false;
-					clicouComida = false;
-					adivinhar = false;
-					//resetting area default for "pessoa"
-					switch (area) {
-					case 1 :
-						pessoa = 0;
-						break;
-					case 2 :
-						pessoa = 3;
-						break;
-					case 3 :
-						pessoa = 6;
-						break;
-					case 4 :
-						pessoa = 9;
-						break;
-					case 5 :
-						pessoa = 12;
-						break;
+					this.questionButtonClick(e);
+					
+					//Check if clicked out of student's screen bounds
+					if (e.getX() <= 300 || e.getX() >= 300 + dialogo.getWidth(null) || e.getY() <= 234 || e.getY() >= 234 + dialogo.getHeight(null)) {
+						resetState("out_of_bounds");
 					}
-					
-				}
-			}
-			
-
-			//Areas
-			//Area Norte
-			if (e.getX () >= 372 && e.getX () <= 414 && e.getY () >= 0 && e.getY () <= 142 && area == 0) {
-				tempoFinal -= 10;
-				clicouNorte = true;
-			}
-			
-			//Area Leste
-			if (e.getX () >= 527 && e.getX () <= 565 && e.getY () >= 350 && e.getY () <= 405 && area == 0) {
-				tempoFinal -= 10;
-				clicouLeste = true;
-			}
-
-			//Area Oeste				
-			if (e.getX () >= 232 && e.getX () <= 332 && e.getY () >= 325 && e.getY () <= 407 && area == 0) {
-				tempoFinal -= 10;
-				clicouOeste = true;
-			}
-			
-			//Area Sul
-			if (e.getX () >= 380 && e.getX () <= 452 && e.getY () >= 565 && e.getY () <= 624 && area == 0) {
-				tempoFinal -= 10;
-				clicouSul = true;
-			}
-			
-			//Area Centro
-			if (e.getX () >= 372 && e.getX () <= 444 && e.getY () >= 220 && e.getY () <= 312 && area == 0) {
-				tempoFinal -= 10;
-				clicouCentro = true;
-			}
-
-			
-				//People
-				//Person on the left
-				if (e.getX () >= 175 && e.getX () <= 225 && e.getY () >= 587 && e.getY () <= 777 && area != 0 && area != 5 && falando == false) {
-					System.out.println(pessoa);
-					wrong = false;
-					tempoFinal -= 3;
-					pessoaArea = 1;
-					falando = true;
-					System.out.println("pessoa 1");
-				//Special condition for the person on the left in area 5 (Brian) who is larger than any other character
-				} else if (e.getX () >= 175 && e.getX () <= 281 && e.getY () >= 587 && e.getY () <= 777 && area == 5 && falando == false) {
-					System.out.println(pessoa);
-					wrong = false;
-					tempoFinal -= 3;
-					pessoaArea = 1;
-					falando = true;
-					System.out.println("pessoa 1 (Brian)");
-				}
-				//Person in the middle
-				else if (e.getX () >= 415 && e.getX () <= 470 && e.getY () >= 360 && e.getY () <= 562 && area != 0 && falando == false) {
-					System.out.println(pessoa);
-					wrong = false;
-					tempoFinal -= 3;
-					pessoaArea = 2;
-					falando = true;
-					System.out.println("pessoa 2");
-				//Person on the right
-				} else if (e.getX () >= 754 && e.getX () <= 817 && e.getY () >= 562 && e.getY () <= 742 && area != 0 && falando == false) {
-					System.out.println(pessoa);
-					tempoFinal -= 3;
-					pessoaArea = 3;
-					falando = true;
-					System.out.println("pessoa 3");
 				}
 				
-				
-
-				
-				//Question Buttons
-				//Clicking this button will ask this person what their favourite colour is, this will waste some time
-				if (e.getX () >= 602 && e.getX () <= 687 && e.getY () >= 387 && e.getY () <= 437 && falando) {
-					tempoFinal -= 1;
-					correct = false;
-					wrong = false;
-					clicouHQ = false;
-					clicouJogo = false;
-					clicouComida = false;
-					adivinhar = false;
-					
-					clicouCor = true;
-				//Clicking this button will ask this person what their favourite Comic book is, this will waste some time
-				} else if (e.getX () >= 692 && e.getX () <= 785 && e.getY () >= 390 && e.getY () <= 437 && falando) {
-					tempoFinal -= 1;
-					correct = false;
-					wrong = false;
-					clicouCor = false;
-					clicouJogo = false;
-					clicouComida = false;
-					adivinhar = false;
-					
-					clicouHQ = true;
-				//Clicking this button will ask this person what their favourite video game is, this will waste some time
-				} else if (e.getX () >= 597 && e.getX () <= 692 && e.getY () >= 449 && e.getY () <= 494 && falando) {
-					tempoFinal -= 1;
-					correct = false;
-					wrong = false;
-					clicouCor = false;
-					clicouHQ = false;
-					clicouComida = false;
-					adivinhar = false;
-					
-					clicouJogo = true;
-				//Clicking this button will ask this person what their favourite food is, this will waste some time
-				} else if (e.getX () >= 692 && e.getX () <= 782 && e.getY () >= 450 && e.getY () <= 497 && falando) {
-					tempoFinal -= 1;
-					correct = false;
-					wrong = false;
-					clicouCor = false;
-					clicouHQ = false;
-					clicouJogo = false;
-					adivinhar = false;
-					
-					clicouComida = true;
-				//Clicking this button will allow you to guess who you're talking to, this will not waste time
-				} else if (e.getX () >= 600 && e.getX () <= 777 && e.getY () >= 509 && e.getY () <= 547 && falando) {
-					correct = false;
-					wrong = false;
-					clicouCor = false;
-					clicouHQ = false;
-					clicouJogo = false;
-					clicouComida = false;
-					
-					resposta = "";
-					adivinhar = true;
-					
+				System.out.println("x: " + e.getX() +" Y:"+ e.getY());
+				if (e.getX() >= 627 && e.getX() <= 782 && e.getY() >= 253 && e.getY() <= 372 && !text_control) {
+					text_control = false;
 				}
 				
+			} else {			
+				this.areaClick(e);
+			}			
 		}
-				
+
+		//Question Buttons
+		public void questionButtonClick(MouseEvent e) {
+			dialog_option = 0;
+
+			if (e.getX () >= 602 && e.getX () <= 687 && e.getY () >= 387 && e.getY () <= 437) {
+				dialog_option = 1;
+			//Clicking this button will ask this person what their favourite Comic book is, this will waste some time
+			} else if (e.getX () >= 692 && e.getX () <= 785 && e.getY () >= 390 && e.getY () <= 437) {
+				dialog_option = 2;
+			//Clicking this button will ask this person what their favourite video game is, this will waste some time
+			} else if (e.getX () >= 597 && e.getX () <= 692 && e.getY () >= 449 && e.getY () <= 494) {
+				dialog_option = 3;
+			//Clicking this button will ask this person what their favourite food is, this will waste some time
+			} else if (e.getX () >= 692 && e.getX () <= 782 && e.getY () >= 450 && e.getY () <= 497) {
+				dialog_option = 4;
+			//Clicking this button will allow you to guess who you're talking to, this will not waste time
+			} else if (e.getX () >= 600 && e.getX () <= 777 && e.getY () >= 509 && e.getY () <= 547) {
+				//resposta = "";
+				adivinhar = true;
+			} else {
+				time_left += 1;
+			}
+			time_left -= 1;
+			
+		}
+		
+		//Areas
+		public void areaClick(MouseEvent e) {
+			if (e.getX () >= 372 && e.getX () <= 414 && e.getY () >= 0 && e.getY () <= 142) {
+				//North
+				area = 1;
+			} else if (e.getX () >= 372 && e.getX () <= 444 && e.getY () >= 220 && e.getY () <= 312) {
+				//Center
+				area = 2;
+			} else if (e.getX () >= 232 && e.getX () <= 332 && e.getY () >= 325 && e.getY () <= 407) {
+				//West
+				area = 3;
+			} else if (e.getX () >= 527 && e.getX () <= 565 && e.getY () >= 350 && e.getY () <= 405) {
+				//East
+				area = 4;
+			} else if (e.getX () >= 380 && e.getX () <= 452 && e.getY () >= 565 && e.getY () <= 624) {
+				//South
+				area = 5;
+			} 
+			
+			if (area > 0) {
+				time_left -= 10;
+				person_area = ((area - 1) * 3 ) + 2;
+			}
+			
+		}
+			
 	}	
 				
-
-		
-			private class keyInputHandler extends KeyAdapter {
-				public void keyPressed(KeyEvent e) {
-						if (adivinhar && achados[pessoa] != 1) {
-							if (e.getKeyChar() != KeyEvent.VK_ENTER) {
-								resposta += e.getKeyChar();
-								System.out.println(e.getKeyChar());
-								} else {
-									System.out.println(resposta);
-									adivinhar = false;
-									respostaFinal = resposta;
-								}
-						
-						//checking if you guessed correctly
-						if (respostaFinal.equals(nome[pessoa]) && achados[pessoa] != -2 && achados[pessoa] != 1){
-							adivinhar = false;
-							correct = true;
-						} else if (!respostaFinal.equals(nome[pessoa]) && achados[pessoa] != -2 && achados[pessoa] != 1) {
-							wrong = true;
-						}
+	private class keyInputHandler extends KeyAdapter {
+		public void keyPressed(KeyEvent e) {
+			
+			if (!talking) {
+				if (!hud_control[3]) {
+					if (e.getKeyChar() == KeyEvent.VK_1) {
+						hud_control[0] = !hud_control[0];
+					} else if (e.getKeyChar() == KeyEvent.VK_2) {
+						hud_control[1] = !hud_control[1];
+					} else if (e.getKeyChar() == KeyEvent.VK_3) {
+						hud_control[2] = !hud_control[2];
+					} 
 				}
-						
-					}				
-				@Override
-				public void keyReleased(KeyEvent e) {
 					
+				if (e.getKeyChar() == KeyEvent.VK_4) {
+					resetState("school_reset");
+					hud_control[3] = !hud_control[3];
 				}
-			}
-		}
+				
+			} 
+			
+			if (adivinhar) {
+				resposta += e.getKeyChar();
+				
+				if (e.getKeyChar() == KeyEvent.VK_BACK_SPACE) {
+					if (resposta == "") {
+						resposta = "";
+					} else {
+						resposta.substring(1, resposta.length() - 1);
+					}
+				} else if (e.getKeyChar() == KeyEvent.VK_ENTER) {
+					respostaFinal = resposta;
+					resposta = "";
+				}
+			} else if (talking) {
+				if (e.getKeyChar() == KeyEvent.VK_1) {
+					dialog_option = 1;
+				} else if (e.getKeyChar() == KeyEvent.VK_2) {
+					dialog_option = 2;
+				} else if (e.getKeyChar() == KeyEvent.VK_3) {
+					dialog_option = 3;
+				} else if (e.getKeyChar() == KeyEvent.VK_4) {
+					dialog_option = 4;
+				} else if (e.getKeyChar() == KeyEvent.VK_ESCAPE) {
+					resetState("out_of_bounds");
+				}
+			} else if (e.getKeyChar() == KeyEvent.VK_ESCAPE) {
+				if (area > 0 && !hud_control[0] && !hud_control[1] && !hud_control[2]) {						
+					area = 0;
+				}
+				hud_control = new Boolean[] {false, false, false, false};	
+			} 
+			
+		}	
+
+	}
+}
